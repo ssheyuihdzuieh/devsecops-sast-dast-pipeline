@@ -14,10 +14,11 @@ jobs:
       - name: Say hello
         run: echo "Pipeline démarré avec succès !"
 
+      - name: Install Semgrep
+        run: pip install semgrep
+
       - name: Run Semgrep SAST scan
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: p/security-audit
+        run: semgrep scan --config p/security-audit --sarif --output semgrep.sarif juice-shop
         continue-on-error: true
 
       - name: Upload Semgrep report
