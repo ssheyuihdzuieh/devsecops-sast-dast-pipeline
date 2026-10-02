@@ -13,3 +13,15 @@ jobs:
 
       - name: Say hello
         run: echo "Pipeline démarré avec succès !"
+
+      - name: Run Semgrep SAST scan
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: p/security-audit
+        continue-on-error: true
+
+      - name: Upload Semgrep report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep.sarif
