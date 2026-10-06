@@ -26,3 +26,21 @@ jobs:
         with:
           name: semgrep-report
           path: semgrep.sarif
+
+      - name: Start Juice Shop
+        run: docker run -d -p 3000:3000 --name juice-shop bkimminich/juice-shop
+
+      - name: Wait for Juice Shop to be ready
+        run: |
+          for i in {1..30}; do
+            curl -sSf http://localhost:3000 > /dev/null && echo "Juice Shop is up" && break
+            echo "Waiting for Juice Shop..."
+            sleep 2
+          done
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          cmd_options: '-a'
+        continue-on-error: true
