@@ -18,7 +18,7 @@ jobs:
         run: pip install semgrep
 
       - name: Run Semgrep SAST scan
-        run: semgrep scan --config p/security-audit --sarif --output semgrep.sarif juice-shop
+        run: semgrep scan --config p/security-audit --sarif --output semgrep.sarif juice-shop demo-vuln
         continue-on-error: true
 
       - name: Upload Semgrep report
