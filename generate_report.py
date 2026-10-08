@@ -1,5 +1,11 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def esc(text):
+    """Escape HTML characters so Markdown shows them as plain text."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
 
 # --- Lire les résultats Semgrep ---
 with open("semgrep.sarif") as f:
@@ -15,7 +21,7 @@ for finding in semgrep_results:
     location = finding["locations"][0]["physicalLocation"]
     file_path = location["artifactLocation"]["uri"]
     line = location["region"]["startLine"]
-    message = finding["message"]["text"]
+    message = esc(finding["message"]["text"])
     semgrep_lines.append(f"- **[{level.upper()}]** `{file_path}:{line}` — {message}")
 
 # --- Lire les résultats ZAP ---
@@ -29,16 +35,20 @@ try:
             risk = alert.get("riskdesc", "").split(" ")[0]
             if risk in zap_summary:
                 zap_summary[risk] += 1
-            name = alert.get("name", "Unknown")
+            name = esc(alert.get("name", "Unknown"))
             count = alert.get("count", "?")
             zap_lines.append(f"- **[{risk}]** {name} ({count} instance(s))")
 except FileNotFoundError:
     zap_lines.append("_ZAP report not found._")
 
 # --- Générer le rapport combiné ---
+now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+semgrep_block = "\n".join(semgrep_lines) if semgrep_lines else "No findings."
+zap_block = "\n".join(zap_lines) if zap_lines else "No alerts."
+
 report = f"""# DevSecOps Security Report
 
-Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+Generated: {now}
 
 ## Summary
 
@@ -47,11 +57,11 @@ Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
 
 ## Semgrep Findings (SAST)
 
-{chr(10).join(semgrep_lines) if semgrep_lines else "No findings."}
+{semgrep_block}
 
 ## ZAP Alerts (DAST)
 
-{chr(10).join(zap_lines) if zap_lines else "No alerts."}
+{zap_block}
 """
 
 with open("security-report.md", "w") as f:
